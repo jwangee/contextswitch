@@ -25,6 +25,8 @@
 
 #include <linux/futex.h>
 
+#define gettid() syscall(SYS_gettid)
+
 struct sched_param CFS_NORMAL_PRIORITY = { .sched_priority = 0, };
 struct sched_param RT_HIGH_PRIORITY = { .sched_priority = 41, };
 struct sched_param RT_LOW_PRIORITY = { .sched_priority = 40, };
