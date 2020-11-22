@@ -31,6 +31,8 @@ struct sched_param CFS_NORMAL_PRIORITY = { .sched_priority = 0, };
 struct sched_param RT_HIGH_PRIORITY = { .sched_priority = 41, };
 struct sched_param RT_LOW_PRIORITY = { .sched_priority = 40, };
 
+cpu_set_t target_core;
+
 static inline long long unsigned time_ns(struct timespec* const ts) {
   if (clock_gettime(CLOCK_REALTIME, ts)) {
     exit(1);
@@ -40,7 +42,10 @@ static inline long long unsigned time_ns(struct timespec* const ts) {
 }
 
 int main(void) {
-  const int iterations = 500000;
+  CPU_ZERO(&target_core);
+  CPU_SET(1, &target_core);
+
+  const int iterations = 5000000;
   struct timespec ts;
   const int shm_id = shmget(IPC_PRIVATE, sizeof (int), IPC_CREAT | 0666);
   const pid_t other = fork();
@@ -48,8 +53,10 @@ int main(void) {
   *futex = 0xA;
   if (other == 0) {
     pid_t tid = gettid();
-    printf("process 1 tid = %d\n", tid);
     sched_setscheduler(tid, SCHED_FIFO, &RT_HIGH_PRIORITY);
+    if(sched_setaffinity(tid, sizeof(cpu_set_t), &target_core)) {
+        exit(-1);
+    }
     usleep(500000);
 
     for (int i = 0; i < iterations; i++) {
@@ -60,8 +67,10 @@ int main(void) {
   }
 
   pid_t tid = gettid();
-  printf("process 1 tid = %d\n", tid);
   sched_setscheduler(tid, SCHED_FIFO, &RT_HIGH_PRIORITY);
+  if(sched_setaffinity(tid, sizeof(cpu_set_t), &target_core)) {
+      exit(-1);
+  }
   usleep(500000);
 
   const long long unsigned start_ns = time_ns(&ts);

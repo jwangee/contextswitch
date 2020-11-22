@@ -29,6 +29,8 @@ struct sched_param CFS_NORMAL_PRIORITY = { .sched_priority = 0, };
 struct sched_param RT_HIGH_PRIORITY = { .sched_priority = 41, };
 struct sched_param RT_LOW_PRIORITY = { .sched_priority = 40, };
 
+cpu_set_t target_core;
+
 static inline long long unsigned time_ns(struct timespec* const ts) {
   if (clock_gettime(CLOCK_REALTIME, ts)) {
     exit(1);
@@ -37,12 +39,14 @@ static inline long long unsigned time_ns(struct timespec* const ts) {
     + (long long unsigned) ts->tv_nsec;
 }
 
-static const int iterations = 500000;
+static const int iterations = 5000000;
 
 static void* thread(void*ctx) {
   pid_t tid = gettid();
-  printf("thread 1 tid = %d\n", tid);
   sched_setscheduler(tid, SCHED_FIFO, &RT_HIGH_PRIORITY);
+  if(sched_setaffinity(tid, sizeof(cpu_set_t), &target_core)) {
+      exit(-1);
+  }
   usleep(500000);
 
   (void)ctx;
@@ -52,6 +56,9 @@ static void* thread(void*ctx) {
 }
 
 int main(void) {
+  CPU_ZERO(&target_core);
+  CPU_SET(1, &target_core);
+
   struct sched_param param;
   param.sched_priority = 1;
   if (sched_setscheduler(getpid(), SCHED_FIFO, &param))
@@ -64,8 +71,10 @@ int main(void) {
   }
 
   pid_t tid = gettid();
-  printf("thread 2 tid = %d\n", tid);
   sched_setscheduler(tid, SCHED_FIFO, &RT_HIGH_PRIORITY);
+  if(sched_setaffinity(tid, sizeof(cpu_set_t), &target_core)) {
+      exit(-1);
+  }
   usleep(500000);
 
   long long unsigned start_ns = time_ns(&ts);
