@@ -14,11 +14,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 CC = gcc
-CFLAGS = -pthread -march=native -O3 -mno-avx -D_XOPEN_SOURCE=600 -D_GNU_SOURCE -std=c99 \
+CFLAGS = -std=c99 -pthread -march=native -O3 -mno-avx -D_XOPEN_SOURCE=600 \
+		 -D_GNU_SOURCE  \
          -W -Wall -Werror
 LDFLAGS = -lrt -lpthread
 
-TARGETS = timectxsw timectxswws timesyscall timetctxsw timetctxsw2 timemunmap
+TARGETS = timertctxsw timectxsw timectxswws timesyscall timetctxsw timetctxsw2 timemunmap
 
 all: bench
 

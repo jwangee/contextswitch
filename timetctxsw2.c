@@ -56,7 +56,7 @@ int main(void) {
       sched_yield();
   long long unsigned delta = time_ns(&ts) - start_ns;
 
-  const int nswitches = iterations << 2;
+  const int nswitches = iterations * 2;
   printf("%i  thread context switches in %lluns (%.1fns/ctxsw)\n",
          nswitches, delta, (delta / (float) nswitches));
   return 0;

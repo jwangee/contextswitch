@@ -40,11 +40,12 @@ echo "$ncpus physical CPUs, $corepercpu cores/CPU,\
  $threadpercore hardware threads/core = $total hw threads total"
 
 runbench() {
-  $* ./timesyscall
-  $* ./timemunmap
+  $* ./timertctxsw
   $* ./timectxsw
+  $* ./timemunmap
   $* ./timetctxsw
   $* ./timetctxsw2
+  $* ./timesyscall
 }
 
 echo '-- No CPU affinity --'
