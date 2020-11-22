@@ -18,9 +18,16 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/syscall.h>
 #include <time.h>
 #include <string.h>
 #include <errno.h>
+
+#define gettid() syscall(SYS_gettid)
+
+struct sched_param CFS_NORMAL_PRIORITY = { .sched_priority = 0, };
+struct sched_param RT_HIGH_PRIORITY = { .sched_priority = 41, };
+struct sched_param RT_LOW_PRIORITY = { .sched_priority = 40, };
 
 static inline long long unsigned time_ns(struct timespec* const ts) {
   if (clock_gettime(CLOCK_REALTIME, ts)) {
@@ -33,6 +40,11 @@ static inline long long unsigned time_ns(struct timespec* const ts) {
 static const int iterations = 500000;
 
 static void* thread(void*ctx) {
+  pid_t tid = gettid();
+  printf("thread 1 tid = %d\n", tid);
+  sched_setscheduler(tid, SCHED_FIFO, &RT_HIGH_PRIORITY);
+  usleep(500000);
+
   (void)ctx;
   for (int i = 0; i < iterations; i++)
       sched_yield();
@@ -50,6 +62,11 @@ int main(void) {
   if (pthread_create(&thd, NULL, thread, NULL)) {
     return 1;
   }
+
+  pid_t tid = gettid();
+  printf("thread 2 tid = %d\n", tid);
+  sched_setscheduler(tid, SCHED_FIFO, &RT_HIGH_PRIORITY);
+  usleep(500000);
 
   long long unsigned start_ns = time_ns(&ts);
   for (int i = 0; i < iterations; i++)

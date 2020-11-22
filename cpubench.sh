@@ -41,11 +41,11 @@ echo "$ncpus physical CPUs, $corepercpu cores/CPU,\
 
 runbench() {
   $* ./timertctxsw
-  $* ./timectxsw
-  $* ./timemunmap
-  $* ./timetctxsw
   $* ./timetctxsw2
-  $* ./timesyscall
+  $* ./timemunmap
+#  $* ./timectxsw
+#  $* ./timetctxsw
+#  $* ./timesyscall
 }
 
 echo '-- No CPU affinity --'
