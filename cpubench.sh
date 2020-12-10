@@ -40,9 +40,9 @@ echo "$ncpus physical CPUs, $corepercpu cores/CPU,\
  $threadpercore hardware threads/core = $total hw threads total"
 
 runbench() {
-  $* ./timertctxsw
-  $* ./timetctxsw2
   $* ./timemunmap
+  $* ./timertctxsw
+#  $* ./timetctxsw2
 #  $* ./timectxsw
 #  $* ./timetctxsw
 #  $* ./timesyscall

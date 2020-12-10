@@ -9,8 +9,8 @@
 #include <time.h>
 #include <unistd.h>
 
-// 4KB * 10000 = 40MB
-#define TOTAL_PAGES 10000
+// 2MB * 1000 = 2GB
+#define TOTAL_PAGES 1000
 
 static inline long long unsigned time_ns(struct timespec* const ts) {
   if (clock_gettime(CLOCK_REALTIME, ts)) {
@@ -21,10 +21,27 @@ static inline long long unsigned time_ns(struct timespec* const ts) {
 }
 
 int main(void) {
+  int err, iterations;
   int page_size = sysconf(_SC_PAGESIZE);
   char* ptr[TOTAL_PAGES];
+  struct timespec ts;
+  long long unsigned start_ns, delta;
 
-  const int iterations = TOTAL_PAGES;
+  // syscall
+  start_ns = time_ns(&ts);
+  iterations = 1000000;
+  for (int i = 0; i < iterations; i++) {
+    if (syscall(SYS_gettid) <= 1) {
+      exit(2);
+    }
+  }
+  delta = time_ns(&ts) - start_ns;
+  printf("%i system calls in %lluns (%.1fns/syscall)\n",
+         iterations, delta, (delta / (float) iterations));
+
+  // map
+  iterations = TOTAL_PAGES;
+  start_ns = time_ns(&ts);
   for (int i = 0; i < iterations; ++i) {
     ptr[i] = mmap (NULL, page_size,
             PROT_READ | PROT_WRITE,
@@ -36,10 +53,12 @@ int main(void) {
     else
       printf("Failed to create a page #%d\n", i);
   }
+  delta = time_ns(&ts) - start_ns;
+  printf("%i map calls in %lluns (%.1fns/map)\n",
+         iterations, delta, (delta / (float) iterations));
 
-  int err;
-  struct timespec ts;
-  const long long unsigned start_ns = time_ns(&ts);
+  // unmap
+  start_ns = time_ns(&ts);
   for (int i = 0; i < iterations; ++i) {
     err = munmap(ptr[i], page_size);
     if (err != 0) {
@@ -47,8 +66,9 @@ int main(void) {
       exit(2);
     }
   }
-  const long long unsigned delta = time_ns(&ts) - start_ns;
+  delta = time_ns(&ts) - start_ns;
   printf("%i unmap calls in %lluns (%.1fns/unmap)\n",
          iterations, delta, (delta / (float) iterations));
+
   return 0;
 }
